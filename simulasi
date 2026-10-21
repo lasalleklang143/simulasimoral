@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Simulasi Moral & Semakan AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased bg-slate-50 min-h-screen flex flex-col">
+
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                    <i class="fa-solid fa-brain text-amber-300 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Simulasi Moral AI</h1>
+                    <p class="text-xs text-indigo-200">Semakan Jawapan Automatik & Papan Skor</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <nav class="flex bg-indigo-800/60 p-1 rounded-xl">
+                <button id="nav-simulasi" onclick="switchTab('simulasi')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span class="hidden sm:inline">Simulasi & Semakan</span>
+                </button>
+                <button id="nav-murid" onclick="switchTab('murid')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="hidden sm:inline">Pengurusan Murid</span>
+                </button>
+                <button id="nav-skor" onclick="switchTab('skor')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-trophy text-amber-300"></i>
+                    <span class="hidden sm:inline">Papan Skor</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: SIMULASI & SEMAKAN -->
+        <div id="tab-simulasi" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Panel Kiri: Bina Situasi Moral (Cikgu) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Langkah 1: Rangka Cikgu</span>
+                            <span class="text-xs text-slate-500"><i class="fa-solid fa-wand-magic-sparkles text-indigo-500 mr-1"></i>Janakan Situasi</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Penyediaan Situasi Moral</h2>
+                        <p class="text-sm text-slate-500 mb-4">Tulis rangka situasi sahaja, AI akan menjana soalan dan panduan jawapan lengkap.</p>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Rangka Situasi / Nilai Moral</label>
+                                <textarea id="rangka-input" rows="3" class="w-full p-3 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Contoh: Ali terjumpa dompet duit di padang sekolah. Nilai kejujuran dan bertindak wajar."></textarea>
+                            </div>
+
+                            <button id="btn-jana-soalan" onclick="janaSoalanMoral()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-sparkles"></i>
+                                <span>Jana Situasi Moral Lengkap</span>
+                            </button>
+                        </div>
+
+                        <!-- Hasil Soalan Dijana AI -->
+                        <div id="soalan-container" class="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-xl hidden space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-indigo-600 uppercase">Situasi & Soalan Terkini:</span>
+                                <span id="nilai-badge" class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-md font-medium">Nilai Moral</span>
+                            </div>
+                            <p id="teks-situasi" class="text-sm font-semibold text-slate-800 leading-relaxed"></p>
+                            <div class="border-t border-slate-200 pt-2">
+                                <p class="text-xs font-bold text-slate-500">Soalan Untuk Murid:</p>
+                                <p id="teks-soalan" class="text-sm font-medium text-indigo-900 mt-0.5"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <div class="flex items-center space-x-2 text-xs text-slate-400">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Murid membaca soalan ini dan menulis jawapan di kertas atau skrin.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Kanan: Pilih Murid, Kamera & Canvas Digital -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Langkah 2: Ambil Gambar / Tulis</span>
+                            <span class="text-xs text-slate-500"><i class="fa-solid fa-camera text-amber-500 mr-1"></i>Mod Fleksibel</span>
+                        </div>
+
+                        <!-- Pilih Murid / Kumpulan -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pilih Murid / Kumpulan Sasaran</label>
+                            <select id="select-murid" class="w-full p-3 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white font-medium">
+                                <option value="">-- Sila Pilih Murid / Kumpulan --</option>
+                            </select>
+                        </div>
+
+                        <!-- Mod Input Switcher -->
+                        <div class="flex border-b border-slate-200 mb-4">
+                            <button id="btn-mode-foto" onclick="switchInputMode('foto')" class="py-2 px-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-camera"></i>
+                                <span>Guna Kamera / Muat Naik</span>
+                            </button>
+                            <button id="btn-mode-draw" onclick="switchInputMode('draw')" class="py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-pen-nib"></i>
+                                <span>Tulis Di Skrin (Canvas)</span>
+                            </button>
+                        </div>
+
+                        <!-- Opsyen A: Imbas / Tangkap Gambar Kertas -->
+                        <div id="mode-foto-container" class="space-y-3">
+                            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="previewImage(event)">
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <button id="btn-open-webcam" onclick="startWebcam()" class="bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-700 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center space-y-1 transition">
+                                    <i class="fa-solid fa-video text-2xl text-indigo-600"></i>
+                                    <span>Buka Kamera Langsung</span>
+                                </button>
+
+                                <button onclick="document.getElementById('file-input').click()" class="bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 text-slate-700 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center space-y-1 transition">
+                                    <i class="fa-solid fa-file-arrow-up text-2xl text-slate-500"></i>
+                                    <span>Pilih Fail Gambar</span>
+                                </button>
+                            </div>
+
+                            <!-- Live Video Stream Container -->
+                            <div id="webcam-container" class="hidden mt-3 border-2 border-indigo-500 rounded-xl p-2 bg-black text-center relative">
+                                <video id="webcam-video" autoplay playsinline class="w-full max-h-64 object-cover rounded-lg"></video>
+                                <div class="mt-2 flex justify-center space-x-2">
+                                    <button onclick="captureWebcam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center space-x-2 shadow">
+                                        <i class="fa-solid fa-camera"></i>
+                                        <span>Tangkap Gambar Now</span>
+                                    </button>
+                                    <button onclick="stopWebcam()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded-xl text-xs sm:text-sm">
+                                        Tutup Kamera
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Preview Box -->
+                            <div id="preview-box" class="hidden mt-3 border border-slate-200 rounded-xl p-2 bg-slate-50 text-center relative">
+                                <p class="text-xs text-slate-500 mb-1">Pratonton Jawapan Terperangkap:</p>
+                                <img id="image-preview" class="max-h-48 rounded-lg mx-auto border border-slate-300 shadow-xs object-contain">
+                                <button onclick="resetImagePreview()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Opsyen B: Canvas Melukis / Menulis Skrin -->
+                        <div id="mode-draw-container" class="hidden space-y-3">
+                            <div class="border-2 border-slate-300 rounded-xl bg-white p-2 text-center relative">
+                                <div class="flex justify-between items-center mb-2 px-2">
+                                    <span class="text-xs font-bold text-slate-500">Tulis jawapan murid di bawah:</span>
+                                    <button onclick="clearCanvas()" class="text-xs text-red-600 hover:text-red-800 font-bold bg-red-50 px-2 py-1 rounded">
+                                        <i class="fa-solid fa-eraser mr-1"></i>Padam Canvas
+                                    </button>
+                                </div>
+                                <canvas id="draw-canvas" class="border border-slate-200 rounded-lg w-full bg-slate-50 cursor-crosshair" height="180"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Butang Semak AI -->
+                        <button id="btn-semak" onclick="semakJawapanAI()" disabled class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                            <span>Semak Jawapan Dengan AI</span>
+                        </button>
+                    </div>
+
+                    <!-- Indikator Loading -->
+                    <div id="loading-spinner" class="hidden my-4 text-center p-4 bg-indigo-50 rounded-xl">
+                        <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 text-2xl mb-2"></i>
+                        <p class="text-xs font-bold text-indigo-800">AI sedang mengecam tulisan & menilai aspek moral...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keputusan Semakan (Popup / Display Modal style) -->
+            <div id="keputusan-box" class="hidden bg-white rounded-2xl p-6 shadow-xl border-2 transition-all duration-300">
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+                    
+                    <!-- Icon Keputusan (Betul / Salah) -->
+                    <div id="status-icon-container" class="flex-shrink-0">
+                        <!-- Will be populated dynamically -->
+                    </div>
+
+                    <!-- Butiran Semakan -->
+                    <div class="flex-1 space-y-2 text-center md:text-left">
+                        <div class="flex items-center justify-center md:justify-start space-x-2">
+                            <span id="status-badge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase"></span>
+                            <span id="markah-badge" class="text-sm font-bold text-slate-700"></span>
+                        </div>
+                        <h3 id="status-tajuk" class="text-2xl font-extrabold"></h3>
+                        
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
+                            <p class="text-xs font-bold text-slate-500 uppercase">Tulisan Dibaca AI (OCR):</p>
+                            <p id="teks-ocr" class="text-sm italic text-slate-700">"..."</p>
+                        </div>
+
+                        <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 text-left">
+                            <p class="text-xs font-bold text-indigo-700 uppercase">Ulasan AI & Cadangan Penambahbaikan:</p>
+                            <p id="ulasan-ai" class="text-sm text-slate-700 mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PENGURUSAN MURID -->
+        <div id="tab-murid" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Pengurusan Nama Murid / Pasukan</h2>
+                        <p class="text-sm text-slate-500">Tambah murid individu atau kumpulan sebelum sesi semakan dibuat.</p>
+                    </div>
+                    <div class="flex space-x-2 w-full sm:w-auto">
+                        <input type="text" id="input-nama-murid" placeholder="Nama murid / kumpulan..." class="px-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none flex-1 sm:w-64">
+                        <button onclick="tambahMurid()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center space-x-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Tambah</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Senarai Murid Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-bold">
+                                <th class="p-3">#</th>
+                                <th class="p-3">Nama Murid / Kumpulan</th>
+                                <th class="p-3">Markah Terkumpul</th>
+                                <th class="p-3 text-right">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="senarai-murid-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PAPAN SKOR -->
+        <div id="tab-skor" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                            <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Papan Skor Kedudukan
+                        </h2>
+                        <p class="text-sm text-slate-500">Jumlah markah terkumpul mengikut pencapaian simulasi moral.</p>
+                    </div>
+                    <button onclick="resetSemuaMarkah()" class="text-xs text-red-600 hover:text-red-800 font-semibold border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Reset Markah
+                    </button>
+                </div>
+
+                <div id="papan-skor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards generated via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // State Application
+        let senaraiMurid = [
+            { id: 1, nama: 'Kumpulan Amanah', markah: 20 },
+            { id: 2, nama: 'Kumpulan Jujur', markah: 15 },
+            { id: 3, nama: 'Ahmad Daniel', markah: 10 }
+        ];
+
+        let soalanTerkini = null;
+        let selectedImageBase64 = null;
+        let activeInputMode = 'foto'; // 'foto' or 'draw'
+        let webcamStream = null;
+
+        // Canvas Drawing Logic
+        let canvas, ctx, isDrawing = false;
+
+        window.onload = function() {
+            kemaskiniDropdownMurid();
+            renderSenaraiMurid();
+            renderPapanSkor();
+            initCanvas();
+        };
+
+        async function startWebcam() {
+            const video = document.getElementById('webcam-video');
+            const container = document.getElementById('webcam-container');
+            
+            try {
+                // Request live back camera or default camera
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: "environment" } },
+                    audio: false
+                });
+                video.srcObject = webcamStream;
+                container.classList.remove('hidden');
+            } catch (err) {
+                alert("Tidak dapat mengakses kamera secara langsung: " + err.message + "\nSila pastikan kebenaran kamera diaktifkan atau gunakan mod 'Pilih Fail Gambar'.");
+            }
+        }
+
+        function captureWebcam() {
+            const video = document.getElementById('webcam-video');
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth || 640;
+            tempCanvas.height = video.videoHeight || 480;
+
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+            const dataUrl = tempCanvas.toDataURL('image/png');
+            selectedImageBase64 = dataUrl.split(',')[1];
+
+            document.getElementById('image-preview').src = dataUrl;
+            document.getElementById('preview-box').classList.remove('hidden');
+
+            stopWebcam();
+            checkBtnSemakState();
+        }
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            document.getElementById('webcam-container').classList.add('hidden');
+        }
+
+        // Navigation Switcher
+        function switchTab(tab) {
+            stopWebcam();
+            const tabs = ['simulasi', 'murid', 'skor'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-indigo-100 hover:text-white";
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-indigo-700 shadow";
+        }
+
+        // Switch Mode (Foto vs Drawing Canvas)
+        function switchInputMode(mode) {
+            stopWebcam();
+            activeInputMode = mode;
+            const btnFoto = document.getElementById('btn-mode-foto');
+            const btnDraw = document.getElementById('btn-mode-draw');
+            const containerFoto = document.getElementById('mode-foto-container');
+            const containerDraw = document.getElementById('mode-draw-container');
+
+            if (mode === 'foto') {
+                btnFoto.className = "py-2 px-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2";
+                btnDraw.className = "py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2";
+                containerFoto.classList.remove('hidden');
+                containerDraw.classList.add('hidden');
+                checkBtnSemakState();
+            } else {
+                btnDraw.className = "py-2 px-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2";
+                btnFoto.className = "py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 font-bold text-xs sm:text-sm flex items-center space-x-2";
+                containerDraw.classList.remove('hidden');
+                containerFoto.classList.add('hidden');
+                document.getElementById('btn-semak').disabled = false; // Canvas always ready
+            }
+        }
+
+        // Canvas Setup & Painting Events
+        function initCanvas() {
+            canvas = document.getElementById('draw-canvas');
+            ctx = canvas.getContext('2d');
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#1e293b';
+
+            // Mouse Events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            // Touch Events for Mobile / Tablet
+            canvas.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }, false);
+
+            canvas.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }, false);
+
+            canvas.addEventListener('touchend', () => {
+                const mouseEvent = new MouseEvent('mouseup', {});
+                canvas.dispatchEvent(mouseEvent);
+            }, false);
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getCanvasCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getCanvasCoordinates(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function getCanvasBase64() {
+            return canvas.toDataURL('image/png').split(',')[1];
+        }
+
+        // Pengurusan Murid Logic
+        function kemaskiniDropdownMurid() {
+            const select = document.getElementById('select-murid');
+            select.innerHTML = '<option value="">-- Sila Pilih Murid / Kumpulan --</option>';
+            senaraiMurid.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.nama} (Markah: ${m.markah})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderSenaraiMurid() {
+            const body = document.getElementById('senarai-murid-body');
+            body.innerHTML = '';
+            if (senaraiMurid.length === 0) {
+                body.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">Tiada murid/kumpulan didaftarkan.</td></tr>`;
+                return;
+            }
+            senaraiMurid.forEach((m, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-400">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-800">${m.nama}</td>
+                    <td class="p-3 font-extrabold text-indigo-600">${m.markah} pt</td>
+                    <td class="p-3 text-right">
+                        <button onclick="padamMurid(${m.id})" class="text-slate-400 hover:text-red-600 transition px-2 py-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function tambahMurid() {
+            const input = document.getElementById('input-nama-murid');
+            const nama = input.value.trim();
+            if (!nama) return;
+
+            const newMurid = {
+                id: Date.now(),
+                nama: nama,
+                markah: 0
+            };
+            senaraiMurid.push(newMurid);
+            input.value = '';
+            kemaskiniDropdownMurid();
+            renderSenaraiMurid();
+            renderPapanSkor();
+        }
+
+        function padamMurid(id) {
+            senaraiMurid = senaraiMurid.filter(m => m.id !== id);
+            kemaskiniDropdownMurid();
+            renderSenaraiMurid();
+            renderPapanSkor();
+        }
+
+        // Papan Skor Logic
+        function renderPapanSkor() {
+            const grid = document.getElementById('papan-skor-grid');
+            grid.innerHTML = '';
+
+            const sorted = [...senaraiMurid].sort((a, b) => b.markah - a.markah);
+
+            sorted.forEach((m, index) => {
+                let badgeColor = "bg-slate-100 text-slate-600";
+                let rankIcon = `<span class="text-sm font-bold text-slate-400">#${index + 1}</span>`;
+
+                if (index === 0) {
+                    badgeColor = "bg-amber-100 text-amber-800 border-amber-300";
+                    rankIcon = `<i class="fa-solid fa-crown text-amber-500 text-xl"></i>`;
+                } else if (index === 1) {
+                    badgeColor = "bg-slate-100 text-slate-700 border-slate-300";
+                    rankIcon = `<i class="fa-solid fa-medal text-slate-400 text-lg"></i>`;
+                } else if (index === 2) {
+                    badgeColor = "bg-amber-800/10 text-amber-900 border-amber-800/20";
+                    rankIcon = `<i class="fa-solid fa-award text-amber-700 text-lg"></i>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border ${badgeColor} flex items-center justify-between shadow-sm`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs">
+                            ${rankIcon}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800">${m.nama}</h4>
+                            <p class="text-xs text-slate-500">Peserta Simulasi</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-indigo-700">${m.markah}</span>
+                        <span class="text-xs text-slate-500 block">mata</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function resetSemuaMarkah() {
+            senaraiMurid.forEach(m => m.markah = 0);
+            kemaskiniDropdownMurid();
+            renderSenaraiMurid();
+            renderPapanSkor();
+        }
+
+        // Jana Soalan Moral dari AI
+        async function janaSoalanMoral() {
+            const rangka = document.getElementById('rangka-input').value.trim();
+            if (!rangka) {
+                alert("Sila masukkan rangka situasi atau nilai moral terlebih dahulu.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-jana-soalan');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Menjana...</span>`;
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = "Anda adalah pakar Pendidikan Moral sekolah. Berdasarkan rangka cikgu, hasilkan situasi moral ringkas dan soalan tindakan yang wajar untuk murid sekolah. Sila kembalikan jawapan dalam format JSON.";
+            const userPrompt = `Rangka Cikgu: ${rangka}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            nilaiMoral: { type: "STRING" },
+                            situasiMoral: { type: "STRING" },
+                            soalanMurid: { type: "STRING" },
+                            kunciJawapan: { type: "STRING" }
+                        },
+                        propertyOrdering: ["nilaiMoral", "situasiMoral", "soalanMurid", "kunciJawapan"]
+                    }
+                }
+            };
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const jsonText = data.candidates[0].content.parts[0].text;
+                soalanTerkini = JSON.parse(jsonText);
+
+                document.getElementById('nilai-badge').textContent = soalanTerkini.nilaiMoral;
+                document.getElementById('teks-situasi').textContent = soalanTerkini.situasiMoral;
+                document.getElementById('teks-soalan').textContent = soalanTerkini.soalanMurid;
+                document.getElementById('soalan-container').classList.remove('hidden');
+
+            } catch (err) {
+                alert("Ralat menjana soalan: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-sparkles"></i><span>Jana Situasi Moral Lengkap</span>`;
+            }
+        }
+
+        // Preview File Image
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageBase64 = e.target.result.split(',')[1]; // Strip base64 prefix
+                    const img = document.getElementById('image-preview');
+                    img.src = e.target.result;
+                    document.getElementById('preview-box').classList.remove('hidden');
+                    checkBtnSemakState();
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetImagePreview() {
+            selectedImageBase64 = null;
+            document.getElementById('preview-box').classList.add('hidden');
+            document.getElementById('file-input').value = '';
+            checkBtnSemakState();
+        }
+
+        function checkBtnSemakState() {
+            if (activeInputMode === 'foto') {
+                document.getElementById('btn-semak').disabled = !selectedImageBase64;
+            } else {
+                document.getElementById('btn-semak').disabled = false;
+            }
+        }
+
+        // Semak Jawapan Murid Menggunakan AI Vision
+        async function semakJawapanAI() {
+            const muridId = document.getElementById('select-murid').value;
+            if (!muridId) {
+                alert("Sila pilih nama murid / kumpulan terlebih dahulu!");
+                return;
+            }
+
+            if (!soalanTerkini) {
+                alert("Sila jana situasi moral terlebih dahulu sebelum semakan.");
+                return;
+            }
+
+            let finalImageBase64 = null;
+            if (activeInputMode === 'foto') {
+                if (!selectedImageBase64) {
+                    alert("Sila muat naik atau tangkap gambar jawapan murid.");
+                    return;
+                }
+                finalImageBase64 = selectedImageBase64;
+            } else {
+                finalImageBase64 = getCanvasBase64();
+            }
+
+            const loading = document.getElementById('loading-spinner');
+            const resultBox = document.getElementById('keputusan-box');
+            loading.classList.remove('hidden');
+            resultBox.classList.add('hidden');
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const promptText = `
+                Anda adalah penguji Pendidikan Moral. 
+                1. Baca tulisan tangan murid pada gambar ini (OCR).
+                2. Bandingkan jawapan murid dengan situasi moral berikut:
+                   Situasi: ${soalanTerkini.situasiMoral}
+                   Soalan: ${soalanTerkini.soalanMurid}
+                   Panduan Jawapan Wajar: ${soalanTerkini.kunciJawapan}
+                3. Tentukan sama ada tindakan murid BETUL (moral terpuji/wajar) atau SALAH (tidak wajar/tidak bermoral).
+                4. Berikan markah (10 jika betul, 0 jika salah).
+                5. Berikan ulasan mendidik.
+            `;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [
+                        { text: promptText },
+                        {
+                            inlineData: {
+                                mimeType: "image/png",
+                                data: finalImageBase64
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            teksDibaca: { type: "STRING" },
+                            isBetul: { type: "BOOLEAN" },
+                            markahDiberi: { type: "NUMBER" },
+                            ulasanAI: { type: "STRING" }
+                        },
+                        propertyOrdering: ["teksDibaca", "isBetul", "markahDiberi", "ulasanAI"]
+                    }
+                }
+            };
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const jsonResult = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                // Papar Keputusan
+                paparKeputusan(jsonResult, muridId);
+
+            } catch (err) {
+                alert("Ralat mengecam jawapan: " + err.message);
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Render Maklum Balas Visual (Tanda Betul / Salah)
+        function paparKeputusan(res, muridId) {
+            const resultBox = document.getElementById('keputusan-box');
+            const iconContainer = document.getElementById('status-icon-container');
+            const badge = document.getElementById('status-badge');
+            const tajuk = document.getElementById('status-tajuk');
+            const markahBadge = document.getElementById('markah-badge');
+            
+            document.getElementById('teks-ocr').textContent = `"${res.teksDibaca}"`;
+            document.getElementById('ulasan-ai').textContent = res.ulasanAI;
+
+            if (res.isBetul) {
+                resultBox.className = "bg-emerald-50/60 rounded-2xl p-6 shadow-xl border-2 border-emerald-400 animate-pop";
+                iconContainer.innerHTML = `
+                    <div class="w-24 h-24 bg-emerald-500 text-white rounded-full flex items-center justify-center text-5xl shadow-lg animate-bounce">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                `;
+                badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-200 text-emerald-900";
+                badge.textContent = "JAWAPAN TEPAT & WAJAR";
+                tajuk.className = "text-2xl font-extrabold text-emerald-900";
+                tajuk.textContent = "Syabas! Tindakan Moral Terpuji!";
+                markahBadge.textContent = `+${res.markahDiberi} Mata Tambahan`;
+            } else {
+                resultBox.className = "bg-rose-50/60 rounded-2xl p-6 shadow-xl border-2 border-rose-400 animate-pop";
+                iconContainer.innerHTML = `
+                    <div class="w-24 h-24 bg-rose-500 text-white rounded-full flex items-center justify-center text-5xl shadow-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                `;
+                badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-rose-200 text-rose-900";
+                badge.textContent = "PERLU PENAMBAHBAIKAN";
+                tajuk.className = "text-2xl font-extrabold text-rose-900";
+                tajuk.textContent = "Kurang Tepat / Tidak Wajar";
+                markahBadge.textContent = `+0 Mata`;
+            }
+
+            // Kemaskini Markah Murid
+            const muridObj = senaraiMurid.find(m => m.id == muridId);
+            if (muridObj && res.isBetul) {
+                muridObj.markah += res.markahDiberi;
+                kemaskiniDropdownMurid();
+                renderSenaraiMurid();
+                renderPapanSkor();
+            }
+
+            resultBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
